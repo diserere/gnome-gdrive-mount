@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Настройки путей
+MOUNT_POINT="$HOME/GoogleDrive"
+REMOTE_NAME="gdrive:"
+
+# Функция для вывода справки
+show_help() {
+    echo "Использование: gdrive [ОПЦИЯ]"
+    echo "Управление монтированием Google Drive через rclone."
+    echo ""
+    echo "Параметры:"
+    echo "  -u, --unmount    Безопасно размонтировать диск и удалить пустую точку монтирования"
+    echo "  -h, --help       Показать эту справку"
+    echo "  Без параметров   Смонтировать диск, если он еще не подключен"
+}
+
+# Сценарий ОТМОНТИРОВАНИЯ
+unmount_drive() {
+    if mountpoint -q "$MOUNT_POINT"; then
+        echo "Попытка отключить Google Drive..."
+        # Пытаемся размонтировать
+        if fusermount -u "$MOUNT_POINT"; then
+            echo "Диск успешно отключен."
+            # Удаляем папку только если она пустая и размонтирование прошло успешно
+            rmdir "$MOUNT_POINT" 2>/dev/null
+        else
+            echo "ОШИБКА: Не удалось отключить диск. Возможно, файлы в папке сейчас открыты в другой программе."
+            exit 1
+        fi
+    else
+        echo "Диск не был примонтирован."
+        # Если папка осталась от аварийного завершения и она пустая — приберем её
+        [ -d "$MOUNT_POINT" ] && rmdir "$MOUNT_POINT" 2>/dev/null
+    fi
+}
+
+# Сценарий МОНТИРОВАНИЯ
+mount_drive() {
+    if mountpoint -q "$MOUNT_POINT"; then
+        echo "Google Drive уже подключен и готов к работе."
+        exit 0
+    fi
+
+    # Проверка на случай аварийного завершения (папка осталась, но не смонтирована)
+    if [ -d "$MOUNT_POINT" ]; then
+        # Проверяем, пустая ли папка
+        if [ "$(ls -A "$MOUNT_POINT")" ]; then
+            echo "ОШИБКА: Точка монтирования '$MOUNT_POINT' существует и НЕ пуста!"
+            echo "Проверьте, нет ли там локальных файлов, чтобы rclone их не перекрыл."
+            exit 1
+        fi
+    else
+        # Создаем папку, если её физически нет
+        mkdir -p "$MOUNT_POINT"
+    fi
+
+    echo "Подключение Google Drive в фоне..."
+    rclone mount "$REMOTE_NAME" "$MOUNT_POINT" --vfs-cache-mode writes &
+    
+    # Даем rclone секунду на старт и проверяем, получилось ли
+    sleep 1
+    if mountpoint -q "$MOUNT_POINT"; then
+        echo "Диск успешно подключен к $MOUNT_POINT"
+    else
+        echo "ОШИБКА: Не удалось примонтировать диск. Проверьте соединение с интернетом или логи rclone."
+        exit 1
+    fi
+}
+
+# Разбор аргументов командной строки
+case "$1" in
+    -u|--unmount)
+        unmount_drive
+        ;;
+    -h|--help)
+        show_help
+        ;;
+    "")
+        mount_drive
+        ;;
+    *)
+        echo "Неизвестный параметр: $1"
+        show_help
+        exit 1
+        ;;
+esac
+

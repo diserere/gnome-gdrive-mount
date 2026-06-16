@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Google Drive
+Comment=Управление монтированием Google Диска
+Exec=gdrive-mount
+Icon=cloud
+Terminal=false
+Categories=Network;FileTransfer;
+StartupNotify=false
+Actions=Unmount;
+
+[Desktop Action Unmount]
+Name=Отключить диск
+Exec=gdrive-mount -u
+
