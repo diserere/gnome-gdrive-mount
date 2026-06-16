@@ -14,7 +14,7 @@
 
 ## Требования
 
-- `rclone` с настроенным удалённым хранилищем с именем `gdrive:` (создаётся через `rclone config`).
+- `rclone` с настроенным удалённым хранилищем с именем `gdrive:` (создаётся через `rclone config`). Пошаговая инструкция — в [`docs/rclone-setup.md`](docs/rclone-setup.md).
 - `fusermount` (пакет `fuse`) — для размонтирования.
 - `mountpoint` (пакет `util-linux`) — для проверки состояния монтирования.
 
