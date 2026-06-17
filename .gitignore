@@ -1,0 +1,4 @@
+# Claude Code — локальные overrides
+# Общие настройки — в .claude/settings.json (коммитятся).
+# Специфичные для машины/профиля — в .claude/settings.local.json (игнорируются).
+.claude/settings.local.json
